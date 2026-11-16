@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Receipt, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Receipt, Mail, Lock, AlertCircle, ArrowRight, Sparkles, CheckCircle2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
@@ -9,7 +9,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  // Forgot password state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
+
+  const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,6 +34,27 @@ export default function LoginPage() {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess(false);
+
+    if (!resetEmail.trim()) {
+      setResetError('Please enter your email address.');
+      return;
+    }
+
+    try {
+      setResetLoading(true);
+      await resetPassword(resetEmail);
+      setResetSuccess(true);
+    } catch (err) {
+      setResetError(err.message || 'Error sending password reset email.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -110,6 +138,16 @@ export default function LoginPage() {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Password
                 </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(email);
+                    setShowResetModal(true);
+                  }}
+                  className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -135,6 +173,86 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+
+      {/* Password Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Reset Password</h3>
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetSuccess(false);
+                  setResetError('');
+                }}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {resetSuccess ? (
+              <div className="py-4 text-center space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Password reset link sent!
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Please check your email inbox for instructions to reset your password.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="mt-3 w-full py-2 text-xs font-semibold bg-blue-600 text-white rounded-xl"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="py-4 space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Enter your email address and we'll send you a password reset link.
+                </p>
+                {resetError && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 text-xs flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{resetError}</span>
+                  </div>
+                )}
+                <div>
+                  <input
+                    type="email"
+                    required
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetModal(false)}
+                    className="px-3 py-1.5 text-xs text-slate-500 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="px-4 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-xl disabled:opacity-50"
+                  >
+                    {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

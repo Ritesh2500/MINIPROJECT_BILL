@@ -16,9 +16,14 @@ client/dist/
 dist/
 
 # Environment files
-server/.env
 .env
 .env.local
+.env.*.local
+*.env.local
+server/.env
+server/.env.local
+client/.env
+client/.env.local
 
 # Logs
 *.log

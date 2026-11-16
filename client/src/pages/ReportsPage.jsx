@@ -61,18 +61,15 @@ export default function ReportsPage() {
   }, [category, status, startDate, endDate]);
 
   const handleDownloadCsv = () => {
-    const url = reportsService.downloadCsvUrl({ category, status, startDate, endDate });
-    window.open(url, '_blank');
+    reportsService.downloadCsv({ category, status, startDate, endDate });
   };
 
   const handleDownloadExcel = () => {
-    const url = reportsService.downloadExcelUrl({ category, status, startDate, endDate });
-    window.open(url, '_blank');
+    reportsService.downloadExcel({ category, status, startDate, endDate });
   };
 
   const handleDownloadPdf = () => {
-    const url = reportsService.downloadPdfUrl({ category, status, startDate, endDate });
-    window.open(url, '_blank');
+    reportsService.downloadPdf({ category, status, startDate, endDate });
   };
 
   return (

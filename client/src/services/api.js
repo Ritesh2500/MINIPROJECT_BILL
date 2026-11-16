@@ -1,118 +1,113 @@
-import axios from 'axios';
+import {
+  supabaseAuthService,
+  supabaseBillsService,
+  supabasePaymentsService,
+  supabaseRecurringService,
+  supabaseCategoriesService,
+  supabaseAnalyticsService,
+  supabaseReportsService,
+  supabaseRemindersService,
+  supabaseSettingsService,
+  supabaseAiService
+} from './supabaseService';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Standard response wrapper to maintain contract compatibility with existing UI components
+const wrap = (fn) => async (...args) => {
+  const result = await fn(...args);
+  return { data: result };
+};
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
-// Request interceptor to attach JWT token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('billmate_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor for token expiration
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      const isAuthRoute = window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/';
-      if (!isAuthRoute) {
-        localStorage.removeItem('billmate_token');
-        localStorage.removeItem('billmate_user');
-        window.location.href = '/login?expired=1';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// API Endpoints
 export const authService = {
-  login: (data) => api.post('/auth/login', data),
-  register: (data) => api.post('/auth/register', data),
-  getMe: () => api.get('/auth/me'),
-  logout: () => api.post('/auth/logout')
+  login: wrap(supabaseAuthService.login),
+  register: wrap(supabaseAuthService.register),
+  getMe: wrap(supabaseAuthService.getMe),
+  logout: wrap(supabaseAuthService.logout),
+  resetPassword: wrap(supabaseAuthService.resetPassword)
 };
 
 export const billsService = {
-  getSummary: () => api.get('/bills/summary'),
-  getBills: (params) => api.get('/bills', { params }),
-  getBill: (id) => api.get(`/bills/${id}`),
-  createBill: (data) => api.post('/bills', data),
-  updateBill: (id, data) => api.put(`/bills/${id}`, data),
-  deleteBill: (id) => api.delete(`/bills/${id}`)
+  getSummary: wrap(supabaseBillsService.getSummary.bind(supabaseBillsService)),
+  getBills: wrap(supabaseBillsService.getBills.bind(supabaseBillsService)),
+  getBill: wrap(supabaseBillsService.getBill.bind(supabaseBillsService)),
+  createBill: wrap(supabaseBillsService.createBill.bind(supabaseBillsService)),
+  updateBill: wrap(supabaseBillsService.updateBill.bind(supabaseBillsService)),
+  deleteBill: wrap(supabaseBillsService.deleteBill.bind(supabaseBillsService))
 };
 
 export const paymentsService = {
-  getPayments: (params) => api.get('/payments', { params }),
-  createPayment: (data) => api.post('/payments', data),
-  deletePayment: (id) => api.delete(`/payments/${id}`)
+  getPayments: wrap(supabasePaymentsService.getPayments.bind(supabasePaymentsService)),
+  createPayment: wrap(supabasePaymentsService.createPayment.bind(supabasePaymentsService)),
+  deletePayment: wrap(supabasePaymentsService.deletePayment.bind(supabasePaymentsService))
 };
 
 export const recurringService = {
-  getRecurringBills: () => api.get('/recurring'),
-  toggleRecurring: (id, is_recurring) => api.put(`/recurring/${id}/toggle`, { is_recurring })
+  getRecurringBills: wrap(supabaseRecurringService.getRecurringBills.bind(supabaseRecurringService)),
+  toggleRecurring: wrap(supabaseRecurringService.toggleRecurring.bind(supabaseRecurringService))
 };
 
 export const categoriesService = {
-  getCategories: () => api.get('/categories'),
-  createCategory: (data) => api.post('/categories', data)
+  getCategories: wrap(supabaseCategoriesService.getCategories.bind(supabaseCategoriesService)),
+  createCategory: wrap(supabaseCategoriesService.createCategory.bind(supabaseCategoriesService))
 };
 
 export const analyticsService = {
-  getOverview: () => api.get('/analytics/overview'),
-  getMonthly: (year) => api.get('/analytics/monthly', { params: { year } }),
-  getCategories: (params) => api.get('/analytics/categories', { params })
+  getOverview: wrap(supabaseAnalyticsService.getOverview.bind(supabaseAnalyticsService)),
+  getMonthly: wrap(supabaseAnalyticsService.getMonthly.bind(supabaseAnalyticsService)),
+  getCategories: wrap(supabaseAnalyticsService.getCategories.bind(supabaseAnalyticsService))
 };
 
 export const remindersService = {
-  getReminders: () => api.get('/reminders'),
-  dismissReminder: (id) => api.put(`/reminders/${id}/dismiss`),
-  triggerScheduler: () => api.post('/reminders/trigger'),
-  getNotifications: () => api.get('/reminders/notifications'),
-  markRead: (id) => api.put(`/reminders/notifications/${id}/read`),
-  deleteNotification: (id) => api.delete(`/reminders/notifications/${id}`)
+  getReminders: wrap(supabaseRemindersService.getReminders.bind(supabaseRemindersService)),
+  dismissReminder: wrap(supabaseRemindersService.dismissReminder.bind(supabaseRemindersService)),
+  triggerScheduler: wrap(supabaseRemindersService.triggerScheduler.bind(supabaseRemindersService)),
+  getNotifications: wrap(supabaseRemindersService.getNotifications.bind(supabaseRemindersService)),
+  markRead: wrap(supabaseRemindersService.markRead.bind(supabaseRemindersService)),
+  deleteNotification: wrap(supabaseRemindersService.deleteNotification.bind(supabaseRemindersService))
 };
 
 export const reportsService = {
-  getReportData: (params) => api.get('/reports/data', { params }),
+  getReportData: wrap(supabaseReportsService.getReportData.bind(supabaseReportsService)),
+  downloadCsv: supabaseReportsService.downloadCsv.bind(supabaseReportsService),
+  downloadExcel: supabaseReportsService.downloadExcel.bind(supabaseReportsService),
+  downloadPdf: supabaseReportsService.downloadPdf.bind(supabaseReportsService),
+  // Direct trigger URLs
   downloadCsvUrl: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return `${API_BASE_URL}/reports/csv${query ? `?${query}` : ''}`;
+    supabaseReportsService.downloadCsv(params);
+    return '#';
   },
   downloadExcelUrl: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return `${API_BASE_URL}/reports/excel${query ? `?${query}` : ''}`;
+    supabaseReportsService.downloadExcel(params);
+    return '#';
   },
   downloadPdfUrl: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return `${API_BASE_URL}/reports/pdf${query ? `?${query}` : ''}`;
+    supabaseReportsService.downloadPdf(params);
+    return '#';
   }
 };
 
 export const settingsService = {
-  getSettings: () => api.get('/settings'),
-  updateSettings: (data) => api.put('/settings', data),
-  updateProfile: (data) => api.put('/settings/profile', data),
-  changePassword: (data) => api.put('/settings/password', data),
-  exportUserData: () => api.get('/settings/export-all')
+  getSettings: wrap(supabaseSettingsService.getSettings.bind(supabaseSettingsService)),
+  updateSettings: wrap(supabaseSettingsService.updateSettings.bind(supabaseSettingsService)),
+  updateProfile: wrap(supabaseSettingsService.updateProfile.bind(supabaseSettingsService)),
+  changePassword: wrap(supabaseSettingsService.changePassword.bind(supabaseSettingsService)),
+  exportUserData: wrap(supabaseSettingsService.exportUserData.bind(supabaseSettingsService))
 };
 
 export const aiService = {
-  ask: (question) => api.post('/ai/ask', { question }),
-  getInsights: () => api.get('/ai/insights'),
-  getPredictions: () => api.get('/ai/predictions')
+  ask: wrap(supabaseAiService.ask.bind(supabaseAiService)),
+  getInsights: wrap(supabaseAiService.getInsights.bind(supabaseAiService)),
+  getPredictions: wrap(supabaseAiService.getPredictions.bind(supabaseAiService))
 };
 
-export default api;
+export default {
+  authService,
+  billsService,
+  paymentsService,
+  recurringService,
+  categoriesService,
+  analyticsService,
+  remindersService,
+  reportsService,
+  settingsService,
+  aiService
+};
